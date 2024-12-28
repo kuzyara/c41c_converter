@@ -62,7 +62,7 @@ if __name__ == '__main__':
             obj_uuid_match = re.search(obj_uuid_pattern, xml_data)
             if obj_uuid_match:
                 obj_uuid = obj_uuid_match.group()
-                params["uuids_obj_path"][obj_uuid] = {"obj_dir": obj_dir, "obj_name": obj_name}
+                params["uuids_obj_path"][obj_uuid] = {"obj_dir": obj_dir, "obj_name": obj_name, "type": "xml"}
 
     # для исходников в формате edt
     all_mdo = glob(params['path_to_conf'] + '\\**\\*.mdo', recursive=True)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
             obj_uuid_match = re.search(obj_uuid_pattern, mdo_data)
             if obj_uuid_match:
                 obj_uuid = obj_uuid_match.group()
-                params["uuids_obj_path"][obj_uuid] = obj_dir
+                params["uuids_obj_path"][obj_uuid] = {"obj_dir": obj_dir, "type": "mdo"}
             # forms uuid=
             forms_uuid_pattern = r'(?<=forms uuid\=\").*?(?=\")'
             forms_uuid_matches = re.finditer(forms_uuid_pattern, mdo_data)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
                 form_name_match = re.search(form_name_pattern, mdo_data[forms_uuid_match.start():])
                 form_name = form_name_match.group()
                 form_dir = os.path.join(*[obj_dir, "Forms", form_name])
-                params["uuids_obj_path"][form_uuid] = form_dir
+                params["uuids_obj_path"][form_uuid] = {"obj_dir": form_dir, "type": "mdo"}
 
     all_measures = glob(params["measure_dirs"] + '\\**\\*.xml', recursive=True)
     for file in tqdm(all_measures):
@@ -105,13 +105,21 @@ if __name__ == '__main__':
                         continue
                     uuid_obj = params["uuids_obj_path"][obj_uuid]
                     file_dir = uuid_obj["obj_dir"]
-                    file_name_tmpl = params["uuids_xml_module_name"][module_uuid]
-                    file_name = file_name_tmpl.format(obj_name=uuid_obj["obj_name"])
-                    file_path = os.path.normpath(os.path.join(file_dir, file_name))
+                    if uuid_obj["type"] == "xml":
+                        file_name_tmpl = params["uuids_xml_module_name"][module_uuid]
+                        file_name = file_name_tmpl.format(obj_name=uuid_obj["obj_name"])
+                        file_path = os.path.normpath(os.path.join(file_dir, file_name))
+                    else:  # mdo
+                        file_name = params["uuids_module_name"][module_uuid]
+                        file_path = os.path.normpath(os.path.join(file_dir, file_name))
                     if os.path.exists(file_path):
                         file_node.set("path", str(file_path))
                     else:
                         print(f"Не найден файл {path}")
                         continue
-            doc.write(args.path_to_output, encoding="UTF-8", xml_declaration=True)
-        print(f"Результат записан в {args.path_to_output}")
+        base_path = str(os.path.relpath(file, params["measure_dirs"]))
+        output_path = os.path.join(args.path_to_output, base_path)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        doc.write(output_path, encoding="UTF-8", xml_declaration=True)
+
+        print(f"Результат записан в {output_path}")
