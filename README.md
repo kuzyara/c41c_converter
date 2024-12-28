@@ -1,7 +1,7 @@
 # c41c_converter
 конвертер замеров для [coverage41c](https://github.com/1c-syntax/Coverage41C)
 
-написал конвертер из <file path="ce9e15dd-8927-49d5-a8ff-b33c337b7c1e/32e087ab-1491-49b6-aba7-43571b41ac2b"> в <file path="DataProcessors/ЖурналДокументовНМА2_4/Forms/ДокументыПоНМА/Ext/Form/Module.bsl">
+написал конвертер из `<file path="ce9e15dd-8927-49d5-a8ff-b33c337b7c1e/32e087ab-1491-49b6-aba7-43571b41ac2b">` в `<file path="DataProcessors/ЖурналДокументовНМА2_4/Forms/ДокументыПоНМА/Ext/Form/Module.bsl">`
 
 пример использования
 ```console
