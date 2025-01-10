@@ -113,7 +113,8 @@ if __name__ == '__main__':
                         file_name = params["uuids_module_name"][module_uuid]
                         file_path = os.path.normpath(os.path.join(file_dir, file_name))
                     if os.path.exists(file_path):
-                        file_node.set("path", str(file_path))
+                        rel_path = os.path.relpath(file_path, params['path_to_conf'])
+                        file_node.set("path", rel_path)
                     else:
                         print(f"Не найден файл {path}")
                         continue
