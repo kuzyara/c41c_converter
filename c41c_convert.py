@@ -11,7 +11,7 @@ def parse_args():
 
     parser.add_argument("--output", help="", required=False, dest="path_to_output")
     parser.add_argument("--config-path", help="", required=False, dest="path_to_conf")
-    parser.add_argument("--measures-path", help="", required=False, dest="path_to_measures")
+    parser.add_argument("--measures-path", help="file or dir", required=False, dest="path_to_measures")
 
     return parser.parse_known_args()
 
@@ -37,7 +37,6 @@ def get_dict_from_uuids(path_to_uuids, offset=0):
 if __name__ == '__main__':
 
     args, unknown_args = parse_args()
-
     params = {"path_to_conf": args.path_to_conf,
               "measure_dirs": args.path_to_measures,
               "uuid_to_path": get_abs_path("lib\\module_types.txt"),
@@ -86,7 +85,10 @@ if __name__ == '__main__':
                 form_dir = os.path.join(*[obj_dir, "Forms", form_name])
                 params["uuids_obj_path"][form_uuid] = {"obj_dir": form_dir, "type": "mdo"}
 
-    all_measures = glob(params["measure_dirs"] + '\\**\\*.xml', recursive=True)
+    if os.path.isfile(params["measure_dirs"]):
+        all_measures = [params["measure_dirs"]]
+    else:
+        all_measures = glob(params["measure_dirs"] + '\\**\\*.xml', recursive=True)
     for file in tqdm(all_measures):
         with open(file, 'r', encoding='utf-8', errors='ignore') as file_measure:
             doc = ElementTree.parse(file_measure)
