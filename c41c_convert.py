@@ -95,10 +95,10 @@ if __name__ == '__main__':
             for file_node in doc.findall('./file'):
                 path = file_node.attrib["path"]
                 if not path.lower().endswith('.bsl'):
-                    # преобразуем "b323fada-5de9-42be-99ee-32ceaa9771a5/d5963243-262e-4398-b4d7-fb16d06484f6"
+                    # преобразуем "/b323fada-5de9-42be-99ee-32ceaa9771a5/d5963243-262e-4398-b4d7-fb16d06484f6"
                     # в "CommonModules/ОбщийМодуль1/Ext/Module.bsl"
-                    obj_uuid = path.split("/")[0]
-                    module_uuid = path.split("/")[1]
+                    obj_uuid = path.split("/")[-2]
+                    module_uuid = path.split("/")[-1]
                     if obj_uuid not in params["uuids_obj_path"]:
                         print(f"Пропущен модуль {path}")
                         continue
@@ -120,8 +120,12 @@ if __name__ == '__main__':
                     else:
                         print(f"Не найден файл {path}")
                         continue
-        base_path = str(os.path.relpath(file, params["measure_dirs"]))
+        if os.path.isfile(params["measure_dirs"]):
+            base_path = os.path.basename(params["measure_dirs"])
+        else:
+            base_path = str(os.path.relpath(file, params["measure_dirs"]))
         output_path = os.path.join(args.path_to_output, base_path)
+
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         doc.write(output_path, encoding="UTF-8", xml_declaration=True)
 
