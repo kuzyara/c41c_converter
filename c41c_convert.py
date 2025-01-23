@@ -85,41 +85,47 @@ if __name__ == '__main__':
                 form_dir = os.path.join(*[obj_dir, "Forms", form_name])
                 params["uuids_obj_path"][form_uuid] = {"obj_dir": form_dir, "type": "mdo"}
 
-    if os.path.isfile(params["measure_dirs"]):
-        all_measures = [params["measure_dirs"]]
-    else:
-        all_measures = glob(params["measure_dirs"] + '\\**\\*.xml', recursive=True)
+    all_measures = glob(params["measure_dirs"] + '\\**\\*.xml', recursive=True) if os.path.isdir(
+        params["measure_dirs"]) else [params["measure_dirs"]]
     for file in tqdm(all_measures):
         with open(file, 'r', encoding='utf-8', errors='ignore') as file_measure:
             doc = ElementTree.parse(file_measure)
-            for file_node in doc.findall('./file'):
-                path = file_node.attrib["path"]
-                if not path.lower().endswith('.bsl'):
-                    # преобразуем "/b323fada-5de9-42be-99ee-32ceaa9771a5/d5963243-262e-4398-b4d7-fb16d06484f6"
-                    # в "CommonModules/ОбщийМодуль1/Ext/Module.bsl"
-                    obj_uuid = path.split("/")[-2]
-                    module_uuid = path.split("/")[-1]
-                    if obj_uuid not in params["uuids_obj_path"]:
-                        print(f"Пропущен модуль {path}")
-                        continue
-                    if module_uuid not in params["uuids_module_name"]:
-                        print(f"Пропущен тип {path}")
-                        continue
-                    uuid_obj = params["uuids_obj_path"][obj_uuid]
-                    file_dir = uuid_obj["obj_dir"]
-                    if uuid_obj["type"] == "xml":
-                        file_name_tmpl = params["uuids_xml_module_name"][module_uuid]
-                        file_name = file_name_tmpl.format(obj_name=uuid_obj["obj_name"])
-                        file_path = os.path.normpath(os.path.join(file_dir, file_name))
-                    else:  # mdo
-                        file_name = params["uuids_module_name"][module_uuid]
-                        file_path = os.path.normpath(os.path.join(file_dir, file_name))
-                    if os.path.exists(file_path):
-                        rel_path = os.path.relpath(file_path, params['path_to_conf'])
-                        file_node.set("path", rel_path)
-                    else:
-                        print(f"Не найден файл {path}")
-                        continue
+            file_nodes = []
+            # format COBERTURA
+            for file_node in doc.findall('.//class'):
+                file_nodes.append(file_node)
+                key = "filename"
+            # format GENERIC_COVERAGE
+            for file_node in doc.findall('.//file'):
+                file_nodes.append(file_node)
+                key = "path"
+            # преобразуем "/b323fada-5de9-42be-99ee-32ceaa9771a5/d5963243-262e-4398-b4d7-fb16d06484f6"
+            # в "CommonModules/ОбщийМодуль1/Ext/Module.bsl"
+            for file_node in file_nodes:
+                path = file_node.attrib[key]
+                obj_uuid = path.split("/")[-2]
+                module_uuid = path.split("/")[-1]
+                if obj_uuid not in params["uuids_obj_path"]:
+                    print(f"Пропущен модуль {path}")
+                    continue
+                if module_uuid not in params["uuids_module_name"]:
+                    print(f"Пропущен тип {path}")
+                    continue
+                uuid_obj = params["uuids_obj_path"][obj_uuid]
+                file_dir = uuid_obj["obj_dir"]
+                if uuid_obj["type"] == "xml":
+                    file_name_tmpl = params["uuids_xml_module_name"][module_uuid]
+                    file_name = file_name_tmpl.format(obj_name=uuid_obj["obj_name"])
+                    file_path = os.path.normpath(os.path.join(file_dir, file_name))
+                else:  # mdo
+                    file_name = params["uuids_module_name"][module_uuid]
+                    file_path = os.path.normpath(os.path.join(file_dir, file_name))
+                if os.path.exists(file_path):
+                    rel_path = os.path.relpath(file_path, params['path_to_conf'])
+                    file_node.set(key, rel_path)
+                else:
+                    print(f"Не найден файл {path}")
+                    continue
         if os.path.isfile(params["measure_dirs"]):
             base_path = os.path.basename(params["measure_dirs"])
         else:
